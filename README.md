@@ -11,7 +11,7 @@
 
 *两台 42 闭环步进经锥齿轮差速驱动顶部平台；相机装在上面，盯住用户点选的那个人。*
 
-> 机械已装配。已落地帧源/有界队列（rdk-01），推理运行时仍在推进。
+> 机械已装配。已落地帧源/有界队列（rdk-01）与人体检测基线（rdk-02），推理运行时仍在推进。
 
 ## 系统结构
 
@@ -56,16 +56,19 @@ flowchart LR
 
 ## 快速开始
 
-当前提供可构建的 X5 帧源与有界队列库；RDK X5 上可用 OpenCV 构建视频回放与摄像头帧源。测试按仓库规则记录后移除。
+当前提供可构建的 X5 帧源、有界队列与人体检测基线；RDK X5 上可用 OpenCV 构建视频回放与摄像头帧源，检测程序需额外开启 BPU 后端。测试按仓库规则记录后移除。
 
 ```bash
 # 主机：无 OpenCV，仅编译库（帧源需 OpenCV 才能打开）
 cmake -S vision -B build-vision -DEDGEGAZE_WITH_OPENCV=OFF
 cmake --build build-vision -j
 
-# 板端（RDK X5，aarch64）：带 OpenCV 的视频回放/摄像头帧源
-cd ~/edgegaze && cmake -S vision -B build -DCMAKE_BUILD_TYPE=Release -DEDGEGAZE_WITH_OPENCV=ON
-cmake --build build -j
+# 板端（RDK X5，aarch64）：带 OpenCV 与 BPU 的视频回放/摄像头帧源与检测基线
+cd /userdata/edgegaze && cmake -S vision -B build-vision -DCMAKE_BUILD_TYPE=Release -DEDGEGAZE_WITH_OPENCV=ON -DEDGEGAZE_WITH_BPU=ON
+cmake --build build-vision -j
+./build-vision/edgegaze_detect_video --video testdata/vtest.mp4 \
+  --model /opt/tros/humble/lib/mono2d_body_detection/config/multitask_body_head_face_hand_kps_960x544.hbm \
+  --fps 10 --queue-capacity 900 --out-dir results
 ```
 
 | 位置 | 环境 | 说明 |
@@ -90,6 +93,8 @@ edgegaze/
 │   └── tests/        单测与故障注入
 ├── vision/       RDK X5 端侧推理
 │   ├── runtime/      帧源、有界队列、会话池、结果缓存
+│   ├── detector/     人体检测基线（rdk-02）
+│   ├── apps/         可执行程序（视频回放检测）
 │   ├── scheduler/    优先级、deadline、按需触发
 │   ├── models/       模型转换、量化、模型卡
 │   ├── tracker/      跟踪与目标状态
@@ -106,7 +111,7 @@ edgegaze/
 | --- | --- | --- |
 | M1 结构标定 | 方向、零点、耦合矩阵、回差、轴间耦合 | 未开始 |
 | M2 固件 | 电机总线、FreeRTOS 任务、位置伺服与安全 | 未开始 |
-| M3 推理运行时 | 帧源、检测、跟踪、按需 ReID、三模式调度 | 进行中（帧源/有界队列已落地） |
+| M3 推理运行时 | 帧源、检测、跟踪、按需 ReID、三模式调度 | 进行中（帧源/有界队列、检测基线已落地） |
 | M4 拼接 | 协议统一、时间同步、跨层年龄策略 | 未开始 |
 | M5 评测 | 固定场景集、质量—成本曲线、demo | 未开始 |
 
