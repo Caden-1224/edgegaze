@@ -11,7 +11,7 @@
 
 *两台 42 闭环步进经锥齿轮差速驱动顶部平台；相机装在上面，盯住用户点选的那个人。*
 
-> 机械已装配。固件与推理运行时未开始，仓库内暂无可运行目标。
+> 机械已装配。已落地帧源/有界队列（rdk-01），推理运行时仍在推进。
 
 ## 系统结构
 
@@ -56,23 +56,23 @@ flowchart LR
 
 ## 快速开始
 
-尚未实现，以下是目标入口，落地后替换为实测命令与截图。
+当前提供可构建的 X5 帧源与有界队列库；RDK X5 上可用 OpenCV 构建视频回放与摄像头帧源。测试按仓库规则记录后移除。
 
 ```bash
-# 板端（RDK X5，aarch64）—— BPU 模型与 hobot_dnn 只有 aarch64 运行时
-cd ~/edgegaze && cmake -S vision -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j
+# 主机：无 OpenCV，仅编译库（帧源需 OpenCV 才能打开）
+cmake -S vision -B build-vision -DEDGEGAZE_WITH_OPENCV=OFF
+cmake --build build-vision -j
 
-# 固件（STM32F407）
-cmake -S firmware -B build-arm -DCMAKE_TOOLCHAIN_FILE=cmake/arm-none-eabi.cmake
-cmake --build build-arm -j
+# 板端（RDK X5，aarch64）：带 OpenCV 的视频回放/摄像头帧源
+cd ~/edgegaze && cmake -S vision -B build -DCMAKE_BUILD_TYPE=Release -DEDGEGAZE_WITH_OPENCV=ON
+cmake --build build -j
 ```
 
 | 位置 | 环境 | 说明 |
 | --- | --- | --- |
 | RDK X5 | Ubuntu 22.04 aarch64、BPU | 构建与运行都在板端 |
 | STM32F407 | arm-none-eabi-gcc 或 Keil MDK | 烧录走 ST-Link |
-| 主机 | Windows + 可选 WSL | 编辑、同步、离线分析、纯逻辑单测 |
+| 主机 | Windows + 可选 WSL | 编辑、同步、离线分析 |
 
 运行时直接调 V4L2 与 BPU。官方示例只作基线对照，不进入本项目依赖。
 
@@ -106,7 +106,7 @@ edgegaze/
 | --- | --- | --- |
 | M1 结构标定 | 方向、零点、耦合矩阵、回差、轴间耦合 | 未开始 |
 | M2 固件 | 电机总线、FreeRTOS 任务、位置伺服与安全 | 未开始 |
-| M3 推理运行时 | 帧源、检测、跟踪、按需 ReID、三模式调度 | 未开始 |
+| M3 推理运行时 | 帧源、检测、跟踪、按需 ReID、三模式调度 | 进行中（帧源/有界队列已落地） |
 | M4 拼接 | 协议统一、时间同步、跨层年龄策略 | 未开始 |
 | M5 评测 | 固定场景集、质量—成本曲线、demo | 未开始 |
 

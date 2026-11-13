@@ -1,5 +1,6 @@
 # 构建产物
 build/
+build-*/
 out/
 Debug/
 Release/
@@ -30,8 +31,8 @@ datasets/
 
 # 运行痕迹
 *.log
-runtime/
-logs/
+/runtime/
+/logs/
 
 # 编辑器与系统
 .vscode/
